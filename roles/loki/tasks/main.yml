@@ -1,0 +1,75 @@
+# roles/loki/tasks/main.yml
+---
+- name: Install dependencies
+  apt:
+    name:
+      - wget
+      - unzip
+    state: present
+
+- name: Create loki user
+  user:
+    name: loki
+    shell: /usr/sbin/nologin
+    system: yes
+    create_home: no
+
+- name: Create necessary directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: loki
+    group: loki
+    mode: '0755'
+  loop:
+    - /etc/loki
+    - /var/lib/loki
+    - /var/lib/loki/wal
+    - /var/lib/loki/index
+    - /var/lib/loki/chunks
+    - /var/lib/loki/cache
+
+- name: Download Loki binary
+  get_url:
+    url: https://github.com/grafana/loki/releases/download/v2.9.4/loki-linux-amd64.zip
+    dest: /tmp/loki.zip
+    mode: '0644'
+
+- name: Extract Loki binary
+  unarchive:
+    src: /tmp/loki.zip
+    dest: /usr/local/bin/
+    remote_src: yes
+
+- name: Rename Loki binary
+  command: mv /usr/local/bin/loki-linux-amd64 /usr/local/bin/loki
+  args:
+    creates: /usr/local/bin/loki
+
+- name: Set permissions on binary
+  file:
+    path: /usr/local/bin/loki
+    mode: '0755'
+    owner: loki
+    group: loki
+
+- name: Copy Loki config
+  copy:
+    src: loki-config.yaml
+    dest: /etc/loki/config.yaml
+    owner: loki
+    group: loki
+    mode: '0644'
+
+- name: Copy Loki systemd unit
+  copy:
+    src: loki.service
+    dest: /etc/systemd/system/loki.service
+    mode: '0644'
+
+- name: Enable and start Loki
+  systemd:
+    name: loki
+    daemon_reload: true
+    enabled: true
+    state: started
