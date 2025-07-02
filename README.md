@@ -1,6 +1,6 @@
 # Monitoring Stack with Ansible
 
-This repository contains an Ansible playbook that installs the following monitoring tools on an Ubuntu or Debian machine:
+This repository contains an Ansible playbook that installs the following monitoring tools :
 
 - **Grafana** for visualising data.
 - **Prometheus** for collecting metrics.
